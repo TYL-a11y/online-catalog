@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5.11 Tactical Store Taipei｜線上型錄</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #F7F5F2; --surface: #FFFFFF; --border: #E0DDD8;
+      --text: #1A1A1A; --muted: #888880; --hint: #B8B5B0;
+      --danger: #C0392B; --warning: #C87941; --success: #2E7D52;
+      --radius-sm: 4px; --radius-md: 10px; --radius-lg: 14px;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; font-weight: 300; line-height: 1.6; min-height: 100vh; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+    header { padding: 48px 0 36px; border-bottom: 1px solid var(--border); margin-bottom: 36px; }
+    .store-name { font-family: 'Noto Serif TC', serif; font-size: clamp(26px, 5vw, 38px); font-weight: 500; letter-spacing: 0.12em; margin-bottom: 8px; }
+    .store-tagline { font-size: 13px; color: var(--muted); letter-spacing: 0.06em; }
+    .controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
+    .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .fb { font-size: 12px; font-family: 'Noto Sans TC', sans-serif; padding: 6px 16px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.18s; letter-spacing: 0.04em; }
+    .fb:hover { border-color: var(--text); color: var(--text); }
+    .fb.active { background: var(--text); color: #fff; border-color: var(--text); }
+    .toggle-wrap { display: flex; align-items: center; gap: 8px; margin-left: auto; font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
+    .toggle-switch { position: relative; width: 36px; height: 20px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-track { position: absolute; inset: 0; background: var(--border); border-radius: 999px; transition: background 0.2s; }
+    .toggle-track::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+    .toggle-switch input:checked + .toggle-track { background: var(--text); }
+    .toggle-switch input:checked + .toggle-track::before { transform: translateX(16px); }
+    .count-label { font-size: 12px; color: var(--hint); margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: box-shadow 0.2s, transform 0.2s; }
+    .card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .img-box { width: 100%; aspect-ratio: 3/4; display: flex; align-items: center; justify-content: center; transition: background 0.3s; position: relative; overflow: hidden; }
+    .img-box img { width: 100%; height: 100%; object-fit: cover; }
+    .sold-badge { position: absolute; top: 10px; right: 10px; background: rgba(192,57,43,0.12); color: var(--danger); font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(192,57,43,0.25); }
+    .card-body { padding: 16px; }
+    .card-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; line-height: 1.4; }
+    .card-sku { font-size: 11px; color: var(--hint); margin-bottom: 4px; }
+    .card-price { font-size: 15px; color: var(--text); margin-bottom: 14px; }
+    .row-label { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
+    .colors { display: flex; gap: 7px; margin-bottom: 14px; flex-wrap: wrap; }
+    .swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; outline: 2px solid transparent; cursor: pointer; transition: outline 0.15s, opacity 0.15s; position: relative; }
+    .swatch:hover { outline: 2px solid var(--hint); outline-offset: 2px; }
+    .swatch.active { outline: 2px solid var(--text); outline-offset: 2px; }
+    .swatch.oos { opacity: 0.22; cursor: not-allowed; }
+    .swatch.oos::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.3) 3px, rgba(0,0,0,0.3) 4px); }
+    .sizes { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+    .sz { font-size: 12px; font-family: 'Noto Sans TC', sans-serif; min-width: 38px; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; text-align: center; }
+    .sz:hover:not(.oos) { border-color: var(--text); color: var(--text); }
+    .sz.active { background: var(--text); color: #fff; border-color: var(--text); }
+    .sz.oos { color: var(--hint); text-decoration: line-through; cursor: not-allowed; opacity: 0.5; }
+    .stock-msg { font-size: 11px; min-height: 16px; margin-top: 4px; }
+    .stock-ok { color: var(--success); }
+    .stock-low { color: var(--warning); }
+    .stock-no { color: var(--danger); }
+    .stock-hint { color: var(--hint); }
+    .loading { grid-column: 1/-1; text-align: center; padding: 80px 20px; color: var(--hint); font-size: 14px; }
+    .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; max-width: 660px; margin: 0 auto; }
+    .setup-card h2 { font-size: 16px; font-weight: 500; margin-bottom: 12px; }
+    .setup-card p { font-size: 13px; color: var(--muted); line-height: 1.9; margin-bottom: 16px; }
+    .setup-card ol { font-size: 13px; color: var(--muted); line-height: 2.2; padding-left: 20px; margin-bottom: 20px; }
+    .setup-card code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; color: var(--text); word-break: break-all; }
+    .setup-card a { color: var(--text); }
+    .setup-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0 20px; }
+    .setup-table th { background: var(--bg); padding: 6px 10px; text-align: left; color: var(--muted); font-weight: 400; border: 1px solid var(--border); }
+    .setup-table td { padding: 6px 10px; border: 1px solid var(--border); color: var(--text); }
+    .setup-table tr:nth-child(even) td { background: #faf9f7; }
+    .error-msg { color: var(--danger); font-size: 13px; background: rgba(192,57,43,0.06); border: 1px solid rgba(192,57,43,0.2); border-radius: var(--radius-md); padding: 12px 16px; margin-top: 16px; }
+    .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--hint); font-size: 14px; }
+    footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--hint); }
+    @media (max-width: 600px) {
+      .page { padding: 0 16px 60px; }
+      header { padding: 32px 0 24px; }
+      .toggle-wrap { margin-left: 0; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <!-- ★ 可改：店名與副標題 -->
+    <div class="store-name">5.11 Tactical Store Taipei</div>
+    <div class="store-tagline">線上商品型錄 &nbsp;·&nbsp; 選擇顏色與尺寸查看庫存</div>
+  </header>
+
+  <div class="controls" id="controls" style="display:none">
+    <div class="filter-group" id="filters"></div>
+    <label class="toggle-wrap">
+      <div class="toggle-switch">
+        <input type="checkbox" id="hideOOS" checked />
+        <div class="toggle-track"></div>
+      </div>
+      隱藏無庫存商品
+    </label>
+  </div>
+
+  <div class="count-label" id="countLabel"></div>
+  <div class="grid" id="grid">
+    <div class="loading"><div class="spinner"></div>載入商品中…</div>
+  </div>
+
+  <footer><!-- ★ 可改：頁尾文字 -->
+    © 2025 5.11 Tactical Store Taipei &nbsp;·&nbsp; 如有問題請透過Facebook官方粉絲專頁聯繫我們
+  </footer>
+</div>
+
+<script>
+/* ================================================================
+  ★ 唯一需要設定的地方：貼上你的 Google 試算表 CSV 網址
+  （取得方式：試算表 → 檔案 → 共用 → 發布到網路 → CSV → 複製網址）
+================================================================ */
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTCZeQjBP4GrNDJ4EEyjX1fFzAqDjp_Z85EUzDDb8LUxkcjYKujyH4APvKYO5X6bA0PSkhot_RqGW5G/pub?output=csv';
+/* ============================================================== */
+
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  return lines.slice(1).map(line => {
+    const vals = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQ = !inQ; }
+      else if (line[i] === ',' && !inQ) { vals.push(cur); cur = ''; }
+      else { cur += line[i]; }
+    }
+    vals.push(cur);
+    const row = {};
+    headers.forEach((h, i) => row[h] = (vals[i] || '').trim().replace(/^"|"$/g, ''));
+    return row;
+  }).filter(r => r.id && r.id !== 'id');
+}
+
+function buildProducts(rows) {
+  const map = {}, order = [];
+  rows.forEach(r => {
+    const id = r.id;
+    if (!map[id]) {
+      map[id] = { id, name: r.name, sku: r.sku, category: r.category, price: parseInt(r.price) || 0, image: r.image || '👕', colors: [], sizes: [], stock: {} };
+      order.push(id);
+    }
+    const p = map[id];
+    if (!p.colors.find(c => c.name === r.color_name)) p.colors.push({ name: r.color_name, hex: r.color_hex });
+    if (!p.sizes.includes(r.size)) p.sizes.push(r.size);
+    if (!p.stock[r.color_name]) p.stock[r.color_name] = {};
+    p.stock[r.color_name][r.size] = parseInt(r.stock) || 0;
+  });
+  return order.map(id => map[id]);
+}
+
+const state = {};
+let PRODUCTS = [], currentCat = '全部';
+
+function getStock(p, color, size) { return (p.stock[color] && p.stock[color][size] != null) ? p.stock[color][size] : 0; }
+function hasAnyStock(p) { return p.colors.some(c => p.sizes.some(sz => getStock(p, c.name, sz) > 0)); }
+function isUrl(s) { return /^https?:\/\//i.test(s); }
+
+function renderFilters() {
+  const cats = ['全部', ...new Set(PRODUCTS.map(p => p.category))];
+  document.getElementById('filters').innerHTML = cats.map(c =>
+    `<button class="fb ${c === currentCat ? 'active' : ''}" onclick="setCat('${c}')">${c}</button>`).join('');
+}
+function setCat(cat) { currentCat = cat; renderFilters(); renderGrid(); }
+function pickColor(pid, c) { state[pid].color = c; state[pid].size = null; rerenderCard(pid); }
+function pickSize(pid, sz) {
+  const p = PRODUCTS.find(x => x.id === pid);
+  if (getStock(p, state[pid].color, sz) === 0) return;
+  state[pid].size = state[pid].size === sz ? null : sz;
+  rerenderCard(pid);
+}
+
+function buildCardHTML(p) {
+  const s = state[p.id];
+  const col = p.colors.find(c => c.name === s.color);
+  const bg = col && !isUrl(p.image) ? col.hex + '1A' : '#f5f5f3';
+  const imgEl = isUrl(p.image)
+    ? `<img src="${p.image}" alt="${p.name}" loading="lazy" />`
+    : `<span style="font-size:64px">${p.image}</span>`;
+  const swatches = p.colors.map(c => {
+    const hasAny = p.sizes.some(sz => getStock(p, c.name, sz) > 0);
+    return `<div class="swatch ${c.name===s.color?'active':''} ${!hasAny?'oos':''}" style="background:${c.hex}" title="${c.name}" onclick="pickColor('${p.id}','${c.name}')"></div>`;
+  }).join('');
+  const szBtns = p.sizes.map(sz => {
+    const st = getStock(p, s.color, sz);
+    return `<div class="sz ${st===0?'oos':''} ${s.size===sz?'active':''}" onclick="pickSize('${p.id}','${sz}')">${sz}</div>`;
+  }).join('');
+  let msg = s.size
+    ? (getStock(p,s.color,s.size)>=5 ? `<span class="stock-ok">庫存充足（${getStock(p,s.color,s.size)} 件）</span>`
+      : getStock(p,s.color,s.size)>0 ? `<span class="stock-low">僅剩 ${getStock(p,s.color,s.size)} 件！</span>`
+      : `<span class="stock-no">此尺寸已售完</span>`)
+    : `<span class="stock-hint">請選擇尺寸</span>`;
+  const sold = !hasAnyStock(p) ? `<div class="sold-badge">已售完</div>` : '';
+  return `<div class="card" id="card-${p.id}">
+    <div class="img-box" style="background:${bg}">${imgEl}${sold}</div>
+    <div class="card-body">
+      <div class="card-name">${p.name}</div>
+      ${p.sku?`<div class="card-sku">貨號 ${p.sku}</div>`:''}
+      <div class="card-price">NT$ ${p.price.toLocaleString()}</div>
+      <div class="row-label">顏色：${s.color}</div>
+      <div class="colors">${swatches}</div>
+      <div class="row-label">尺寸：</div>
+      <div class="sizes">${szBtns}</div>
+      <div class="stock-msg">${msg}</div>
+    </div>
+  </div>`;
+}
+
+function rerenderCard(pid) {
+  const el = document.getElementById('card-'+pid);
+  if (!el) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = buildCardHTML(PRODUCTS.find(x=>x.id===pid));
+  el.replaceWith(tmp.firstElementChild);
+}
+
+function renderGrid() {
+  const hide = document.getElementById('hideOOS').checked;
+  const filtered = PRODUCTS.filter(p => !(hide && !hasAnyStock(p)) && (currentCat==='全部' || p.category===currentCat));
+  document.getElementById('countLabel').textContent = `顯示 ${filtered.length} 件商品`;
+  document.getElementById('grid').innerHTML = filtered.length
+    ? filtered.map(p=>buildCardHTML(p)).join('')
+    : '<div class="empty">此分類目前無商品</div>';
+}
+
+function showSetupGuide(err) {
+  document.getElementById('grid').innerHTML = `<div class="setup-card">
+    <h2>⚙️ 一次設定，之後只管 Google 試算表就好</h2>
+    <p>請依照以下步驟設定，完成後這個 HTML 檔案就不需要再動了。<br>
+    之後新增商品、修改庫存，只要更新試算表，顧客重新整理網頁就能看到最新內容。</p>
+    <ol>
+      <li>前往 <a href="https://sheets.google.com" target="_blank">Google 試算表</a> 新增一份試算表</li>
+      <li>第一列（標題列）依序填入以下欄位名稱：<br><br>
+        <code>id, name, sku, category, price, image, color_name, color_hex, size, stock</code>
+      </li>
+      <li>從第二列開始填入商品資料，範例如下：</li>
+    </ol>
+    <table class="setup-table">
+      <tr><th>id</th><th>name</th><th>sku</th><th>category</th><th>price</th><th>image</th><th>color_name</th><th>color_hex</th><th>size</th><th>stock</th></tr>
+      <tr><td>1</td><td>防曬外套</td><td>484029</td><td>外套</td><td>1680</td><td>🧥</td><td>棕色</td><td>#B8865A</td><td>XS</td><td>3</td></tr>
+      <tr><td>1</td><td>防曬外套</td><td>484029</td><td>外套</td><td>1680</td><td>🧥</td><td>棕色</td><td>#B8865A</td><td>S</td><td>5</td></tr>
+      <tr><td>1</td><td>防曬外套</td><td>484029</td><td>外套</td><td>1680</td><td>🧥</td><td>霧白</td><td>#D0CFC8</td><td>XS</td><td>0</td></tr>
+      <tr><td>1</td><td>防曬外套</td><td>484029</td><td>外套</td><td>1680</td><td>🧥</td><td>霧白</td><td>#D0CFC8</td><td>S</td><td>2</td></tr>
+      <tr><td>2</td><td>素色T恤</td><td>203011</td><td>上衣</td><td>490</td><td>👕</td><td>白色</td><td>#F0EDE8</td><td>M</td><td>8</td></tr>
+    </table>
+    <ol start="4">
+      <li>點選：<strong>檔案 → 共用 → 發布到網路</strong></li>
+      <li>選擇「整份文件」→「逗號分隔值 (.csv)」→ 按「發布」</li>
+      <li>複製出現的網址</li>
+      <li>用記事本（Windows）或文字編輯器（Mac）開啟 <code>index.html</code></li>
+      <li>找到這一行：<br><code>const SHEET_CSV_URL = '';</code><br>
+        把網址貼進兩個引號之間，例如：<br>
+        <code>const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/.../pub?output=csv';</code>
+      </li>
+      <li>儲存檔案，重新上傳到 GitHub Pages / Netlify / Cloudflare，完成！</li>
+    </ol>
+    <p>之後要新增商品或修改庫存，只需要更新試算表，完全不用再碰 HTML 檔案。</p>
+    ${err ? `<div class="error-msg">⚠️ ${err}</div>` : ''}
+  </div>`;
+}
+
+async function init() {
+  if (!SHEET_CSV_URL) { showSetupGuide(''); return; }
+  try {
+    const res = await fetch(SHEET_CSV_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = parseCSV(await res.text());
+    if (!rows.length) throw new Error('試算表沒有資料，請確認欄位名稱正確');
+    PRODUCTS = buildProducts(rows);
+    PRODUCTS.forEach(p => { state[p.id] = { color: p.colors[0]?.name || '', size: null }; });
+    document.getElementById('controls').style.display = 'flex';
+    renderFilters();
+    renderGrid();
+    document.getElementById('hideOOS').addEventListener('change', renderGrid);
+  } catch(e) {
+    showSetupGuide('無法讀取試算表：' + e.message + '。請確認網址正確，且試算表已設為「發布到網路」。');
+  }
+}
+init();
+</script>
+</body>
+</html>
